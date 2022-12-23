@@ -1,9 +1,9 @@
-import Button from 'components/Button/Button';
+
 import PropTypes from 'prop-types';
 import ImageGalleryItem from 'components/ImageGalleryItem/ImageGalleryItem'
 import {List} from './ImageGallery.styled'
 
-const ImageGallery = ({ items, onItemClick, loadMore }) => {
+const ImageGallery = ({ items, onItemClick }) => {
 return (
     <>
         <List>
@@ -16,14 +16,17 @@ return (
         openModal={() => onItemClick(largeImageURL)}/>
         ))}
         </List>
-        {items.length > 0 && <Button onClick={loadMore}/>}
+        
     </>
 )
 }
 ImageGallery.propTypes = {
-    items: PropTypes.array,
+    items: PropTypes.arrayOf(
+        PropTypes.shape({
+            id: PropTypes.number.isRequired
+        })
+    ),
     onItemClick: PropTypes.func.isRequired,
-    loadMore: PropTypes.func.isRequired,
 }
 
 export default ImageGallery;

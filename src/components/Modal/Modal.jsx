@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import PropTypes from 'prop-types';
 import { createPortal } from "react-dom";
 import {Overlay, ModalWindow, ModalImg} from './Modal.styled'
 
@@ -24,14 +25,18 @@ export default class Modal extends Component {
     }
 
     render() {
-        const { onClose, activeUrl, url } = this.props;
+        const { activeUrl, url } = this.props;
         return createPortal(
             <Overlay onClick={this.handleOverlay}>
-                <ModalWindow onClick={onClose}>
+                <ModalWindow>
                     <ModalImg src={activeUrl} alt={url} />
                 </ModalWindow>
             </Overlay>,
             modalRoot
         );
     }
+}
+Modal.propTypes = {
+    activeUrl: PropTypes.string.isRequired,
+    url: PropTypes.string.isRequired
 }
