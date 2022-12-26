@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import { useState, useEffect } from "react";
 import toast, { Toaster } from 'react-hot-toast';
 import { Container } from "./App.styled";
 import fetchImages from "../../services/Api";
@@ -8,77 +8,65 @@ import Modal from "components/Modal/Modal";
 import Loader from "components/Loader/Loader";
 import Button from "components/Button/Button";
 
+export const App = () => {
+  const [page, setPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [items, setItems] = useState([]);
+  const [url, setUrl] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [total, setTotal] = useState('');
 
-export class App extends Component {
-  state = {
-    page: 1,
-    query: '',
-    items: [],
-    url: null,
-    isLoading: false, 
-    total: '',
-  }
-
-  loadMore = () => {
-    this.setState(({page}) => ({
-      page: page + 1,
-    }))
-  }
-  componentDidUpdate(_, prevState) {
-    const { page, query } = this.state;
-    if (prevState.page !== page ||
-      prevState.query !== query ) {
-      this.fetchSearchQuery();
-      return;
-    }
-  }
-  fetchSearchQuery = async () => {
-    const { page, query } = this.state;
-    this.setState({ isLoading: true });
-    try { 
-      const { hits } = await fetchImages(query, page);
-      if (hits.length === 0) {
-        toast.error('Nothing was found for your query');
-        return;
+  useEffect(() => {
+    if (searchQuery !== '') {
+      setIsLoading(true);
+        
+      const fetchSearchQuery = async () => {
+        setIsLoading(true);
+        try {
+          const { hits } = await fetchImages(searchQuery, page);
+          if (hits.length === 0) {
+            toast.error('Nothing was found for your query');
+            return;
+          }
+          setItems(items => [...items, ...hits]);
+          setTotal('');
+        } catch {
+          toast.error('An error has occurred, please try again');
+        } finally {
+          setIsLoading(false);
+        }
       }
-      this.setState(({ items }) => ({ items: [...items, ...hits] }));
-    } catch {
-      toast.error('An error has occurred, please try again');
-    } finally {
-      this.setState({ isLoading: false });
+      fetchSearchQuery()
     }
-  } 
-  openModal = activeUrl => this.setState({ url: activeUrl });
-  closeModal = () => this.setState({ url: '' });
-  
-  handleSubmit = event => {
+    }, [searchQuery, page]);
+
+const openModal = activeUrl => setUrl(activeUrl);
+const closeModal = () => setUrl('');
+const loadMore = () => {
+    setPage(page => page + 1)
+  }
+
+const handleSubmit = event => {
     event.preventDefault();
     const query = event.target.elements.query.value;
-    if (query !== this.state.query) {
-      this.setState({
-        page: 1,
-        query: query,
-        items: [],
-      })
-    } else if (query.trim() === '') {
+    if (searchQuery !== query) {
+      setPage(1);
+      setSearchQuery(query);
+      setItems([]);
+} else if (query.trim() === '') {
       return toast.error('The search cannot be performed without a query');
     }
-      else if (query === this.state.query) {
+      else if (searchQuery === query) {
       return toast.success('The images are already on the screen!!');
     }
-    }
-  
-  render() {
-    const { url, items, isLoading, query, total } = this.state;
-    return (<Container>
-      <Searchbar onSubmit={this.handleSubmit} />
-      {items.length > 0 && query !== '' && <ImageGallery items={items} onItemClick={this.openModal} loadMore={this.loadMore} />}
-      {url && <Modal activeUrl={url} alt={url} onClose={this.closeModal} />}
+  }
+      return (<Container>
+      <Searchbar onSubmit={handleSubmit} />
+      {items.length > 0 && searchQuery !== '' && <ImageGallery items={items} onItemClick={openModal} loadMore={loadMore} />}
+      {url && <Modal activeUrl={url} alt={url} onClose={closeModal} />}
       {isLoading  && <Loader />}
-      {items.length > 0 && !isLoading && query !== '' && items.length !== total && <Button onClick={this.loadMore}/>}
+      {items.length > 0 && !isLoading && searchQuery !== '' && items.length !== total && <Button onClick={loadMore}/>}
       <Toaster position="top-right" reverseOrder={false} />
       </Container>
     )
-  }
- 
-};
+}
